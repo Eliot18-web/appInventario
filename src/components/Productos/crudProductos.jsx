@@ -1,5 +1,15 @@
 import { useCallback, useEffect, useState } from "react";
-import api from "../../servieces/api.js";
+import api from "../../services/api.js";
+import { getErrorMessage, getItems } from "../../services/resourceService.js";
+
+const getHeaders = () => {
+  const token = sessionStorage.getItem("token");
+  return {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  };
+};
 
 const initialForm = {
   id: null,
@@ -9,42 +19,47 @@ const initialForm = {
   stock: "",
 };
 
+const getFetchErrorMessage = (requestError) => requestError instanceof Error
+  ? getErrorMessage(requestError, "No se pudieron cargar los productos.")
+  : "No se pudieron cargar los productos.";
+
 const CrudProductos = () => {
   const [productos, setProductos] = useState([]);
   const [form, setForm] = useState(initialForm);
   const [error, setError] = useState("");
   const [cargando, setCargando] = useState(true);
 
+  const handleFetchError = useCallback((requestError) => {
+    console.error(
+      "Error al obtener productos; es posible que el token haya expirado.",
+      requestError,
+    );
+    setError(getFetchErrorMessage(requestError));
+  }, []);
+
   const obtenerProductos = useCallback(async () => {
     try {
-      const response = await api.get("/productos");
-      setProductos(response.data);
+      const response = await api.get("/api/productos", getHeaders());
+      setProductos(getItems(response.data));
       setError("");
     } catch (requestError) {
-      setError(
-        requestError instanceof Error
-          ? requestError.message
-          : "No se pudieron cargar los productos.",
-      );
+      handleFetchError(requestError);
     }
-  }, []);
+  }, [handleFetchError]);
 
   useEffect(() => {
     let componenteActivo = true;
 
-    api.get("/productos")
+    api.get("/api/productos", getHeaders())
       .then((response) => {
         if (componenteActivo) {
-          setProductos(response.data);
+          setProductos(getItems(response.data));
+          setError("");
         }
       })
       .catch((requestError) => {
         if (componenteActivo) {
-          setError(
-            requestError instanceof Error
-              ? requestError.message
-              : "No se pudieron cargar los productos.",
-          );
+          handleFetchError(requestError);
         }
       })
       .finally(() => {
@@ -56,7 +71,7 @@ const CrudProductos = () => {
     return () => {
       componenteActivo = false;
     };
-  }, []);
+  }, [handleFetchError]);
 
   const handleChange = (event) => {
     setForm({ ...form, [event.target.name]: event.target.value });
@@ -68,18 +83,16 @@ const CrudProductos = () => {
 
     try {
       if (form.id) {
-        await api.put(`/productos/${form.id}`, form);
+        await api.put(`/api/productos/${form.id}`, form, getHeaders());
       } else {
-        await api.post("/productos", form);
+        await api.post("/api/productos", form, getHeaders());
       }
 
       setForm(initialForm);
       await obtenerProductos();
     } catch (requestError) {
       setError(
-        requestError instanceof Error
-          ? requestError.message
-          : "No se pudo guardar el producto.",
+        getErrorMessage(requestError, "No se pudo guardar el producto."),
       );
     }
   };
@@ -101,13 +114,11 @@ const CrudProductos = () => {
 
     setError("");
     try {
-      await api.delete(`/productos/${id}`);
+      await api.delete(`/api/productos/${id}`, getHeaders());
       await obtenerProductos();
     } catch (requestError) {
       setError(
-        requestError instanceof Error
-          ? requestError.message
-          : "No se pudo eliminar el producto.",
+        getErrorMessage(requestError, "No se pudo eliminar el producto."),
       );
     }
   };

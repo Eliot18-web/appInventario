@@ -1,16 +1,51 @@
-# React + Vite
+# SENATI · Sistema de Inventario
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Panel administrativo construido con React, Vite y CSS puro. Consume una API REST en Express.
 
-Currently, two official plugins are available:
+## Requisitos
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- Node.js y npm
+- API Express accesible desde el navegador
 
-## React Compiler
+## Instalación y ejecución
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```bash
+npm install
+copy .env.example .env
+npm run dev
+```
 
-## Expanding the ESLint configuration
+Configura `VITE_API_URL` en `.env` con el origen del backend (por defecto `http://localhost:3006`). Reinicia Vite cuando cambies variables de entorno.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Comprobaciones disponibles:
+
+```bash
+npm run lint
+npm run build
+```
+
+## Rutas
+
+- `/` (inicio de sesión)
+- `/dashboard`
+- `/productos`
+- `/categorias`
+- `/proveedores`
+- `/kardex`
+- `/usuarios`
+
+Las rutas del sistema requieren un token de sesión. Sin token, la aplicación redirige al inicio de sesión.
+
+## Endpoints esperados
+
+- `POST /api/auth/login`
+- `GET /api/dashboard`
+- `GET|POST /api/productos`, `PUT|DELETE /api/productos/:id`
+- `GET|POST /api/categorias`, `PUT|DELETE /api/categorias/:id`
+- `GET|POST /api/proveedores`, `PUT|DELETE /api/proveedores/:id`
+- `GET|POST /api/movimientos`, `PUT|DELETE /api/movimientos/:id`
+- `GET|POST /api/usuarios`, `PUT|DELETE /api/usuarios/:id`
+
+Las listas reciben `page`, `limit` y `search`. Se admiten respuestas de lista como un arreglo, `{ data: [...] }`, `{ items: [...] }` o `{ results: [...] }`, con total opcional (`total`, `totalItems` o `count`).
+
+Si un endpoint responde `404`, su service usa temporalmente datos mock en memoria; los `TODO` identifican cada fallback. Otros errores de red o del servidor se muestran al usuario.
